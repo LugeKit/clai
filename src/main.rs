@@ -1,5 +1,6 @@
 use clap::Parser;
-use std::io::{stdin, Read};
+use std::io;
+use std::io::{stdin, Read, Write};
 use std::process::exit;
 
 mod ai;
@@ -13,9 +14,8 @@ fn main() {
         None => loop {
             let mut query = String::new();
             print!("提问: ");
-            stdin()
-                .read_to_string(&mut query)
-                .expect("failed to readline");
+            io::stdout().flush().expect("failed to flush stdout");
+            stdin().read_line(&mut query).expect("failed to readline");
             if query.trim().to_lowercase() == "exit" {
                 break;
             }
