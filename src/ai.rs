@@ -53,6 +53,8 @@ impl Requester {
         let body = response.text().context("结果获取失败")?;
         let result: Response = serde_json::from_str(body.as_str()).context("JSON 解析失败")?;
 
+        self.messages.push(result.choices[0].message.clone());
+
         Ok(format_ai_output(&result.choices[0].message.content))
     }
 }
@@ -90,7 +92,7 @@ struct Choice {
     message: Message,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct Message {
     role: String,
     content: String,
