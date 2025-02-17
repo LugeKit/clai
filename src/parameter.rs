@@ -7,4 +7,8 @@ pub struct Parameter {
 
     #[arg(short = 'p', long = "prompt")]
     pub prompt: Option<String>,
+
+    #[arg(short = 't', long = "timeout")]
+    #[clap(help = "Set request timeout seconds")]
+    pub timeout: Option<u64>,
 }

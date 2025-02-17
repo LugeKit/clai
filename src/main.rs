@@ -10,15 +10,20 @@ mod parameter;
 fn main() {
     let param = parameter::Parameter::parse();
     let config = config::Config::new();
+
     let prompt = if param.prompt.is_none() {
         config.prompt
     } else {
         param.prompt.expect("")
     };
 
-    println!("prompt: {}", prompt);
+    let timeout = if param.timeout.is_none() {
+        config.timeout
+    } else {
+        param.timeout.expect("")
+    };
 
-    let mut requester = ai::Requester::new(prompt);
+    let mut requester = ai::Requester::new(prompt, timeout);
     let mut first_answer = true;
 
     match param.query {

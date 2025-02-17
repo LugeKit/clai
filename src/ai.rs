@@ -12,10 +12,11 @@ pub struct Requester {
     model: String,
     base_url: String,
     api_key: String,
+    timeout: Duration,
 }
 
 impl Requester {
-    pub fn new(prompt: String) -> Requester {
+    pub fn new(prompt: String, timeout: u64) -> Requester {
         Requester {
             client: Client::new(),
             messages: vec![Message {
@@ -25,6 +26,7 @@ impl Requester {
             model: "ep-20250213110005-vwjgt".to_string(),
             base_url: format!("https://{DOUBAO_API}/chat/completions"),
             api_key: "e6a7f2c3-6d56-4ab9-90ed-e88870b23c7d".to_string(),
+            timeout: Duration::from_secs(timeout),
         }
     }
 
@@ -46,12 +48,13 @@ impl Requester {
             .header("Content-Type", "application/json")
             .header("Authorization", format!("Bearer {api_key}"))
             .json(&data)
-            .timeout(Duration::from_secs(10))
+            .timeout(self.timeout)
             .send()
-            .context("请求发送失败")?;
+            .context("fail to do request")?;
 
-        let body = response.text().context("结果获取失败")?;
-        let result: Response = serde_json::from_str(body.as_str()).context("JSON 解析失败")?;
+        let body = response.text().context("fail to get http response")?;
+        let result: Response =
+            serde_json::from_str(body.as_str()).context("fail to unmarshal json")?;
 
         self.messages.push(result.choices[0].message.clone());
 

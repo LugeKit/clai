@@ -6,6 +6,7 @@ use std::io::Read;
 #[derive(Deserialize)]
 pub struct Config {
     pub prompt: String,
+    pub timeout: u64,
 }
 
 impl Config {
@@ -18,6 +19,7 @@ impl Config {
             Err(_) => {
                 Config {
                     prompt: "you are an excellent programmer, now breifly answer the questions, don't explain your answer in details when it is not required".to_string(),
+                    timeout: 60,
                 }
             }
         }
