@@ -26,16 +26,17 @@ fn main() {
     let mut requester = ai::Requester::new(prompt, timeout);
     let mut first_answer = true;
 
-    match param.query {
-        None => loop {
+    if param.interactive {
+        loop {
             if !first_answer {
                 println!("--------------------------");
             }
-
             first_answer = false;
-            let mut query = String::new();
+
             print!("question: ");
             io::stdout().flush().expect("failed to flush stdout");
+
+            let mut query = String::new();
             stdin().read_line(&mut query).expect("failed to readline");
             if query.trim().to_lowercase() == "exit" {
                 break;
@@ -43,12 +44,24 @@ fn main() {
 
             let result = requester.request(query);
             println!("answer: {}\n", result.unwrap_or_else(|e| { e.to_string() }));
-        },
-        Some(query) => {
-            let result = requester.request(query);
-            println!("answer: {}\n", result.unwrap_or_else(|e| { e.to_string() }));
+        }
+        exit(0)
+    }
+
+    let mut query = String::new();
+    match param.query {
+        None => {
+            stdin()
+                .read_to_string(&mut query)
+                .expect("failed to read from stdin");
+        }
+        Some(_query) => {
+            query = _query;
         }
     }
+
+    let result = requester.request(query);
+    println!("answer: {}\n", result.unwrap_or_else(|e| { e.to_string() }));
 
     exit(0);
 }

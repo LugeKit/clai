@@ -11,4 +11,7 @@ pub struct Parameter {
     #[arg(short = 't', long = "timeout")]
     #[clap(help = "Set request timeout seconds")]
     pub timeout: Option<u64>,
+
+    #[arg(short = 'i', long = "interactive", default_value_t = false)]
+    pub interactive: bool,
 }
