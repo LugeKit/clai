@@ -1,7 +1,7 @@
 use clap::Parser;
-use std::io;
 use std::io::{stdin, Read, Write};
 use std::process::exit;
+use std::{env, io};
 
 mod ai;
 mod config;
@@ -11,19 +11,11 @@ fn main() {
     let param = parameter::Parameter::parse();
     let config = config::Config::new();
 
-    let prompt = if param.prompt.is_none() {
-        config.prompt
-    } else {
-        param.prompt.expect("")
-    };
+    let prompt = param.prompt.unwrap_or(config.prompt);
+    let timeout = param.timeout.unwrap_or(config.timeout);
+    let api_key = env::var("LLM_API_KEY").expect("failed to get api_key");
 
-    let timeout = if param.timeout.is_none() {
-        config.timeout
-    } else {
-        param.timeout.expect("")
-    };
-
-    let mut requester = ai::Requester::new(prompt, timeout);
+    let mut requester = ai::Requester::new(prompt, timeout, api_key);
     let mut first_answer = true;
 
     if param.interactive {

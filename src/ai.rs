@@ -3,7 +3,6 @@ use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
-const DEEPSEEK_API: &'static str = "api.deepseek.com";
 const DOUBAO_API: &'static str = "ark.cn-beijing.volces.com/api/v3";
 
 pub struct Requester {
@@ -16,7 +15,7 @@ pub struct Requester {
 }
 
 impl Requester {
-    pub fn new(prompt: String, timeout: u64) -> Requester {
+    pub fn new(prompt: String, timeout: u64, api_key: String) -> Requester {
         Requester {
             client: Client::new(),
             messages: vec![Message {
@@ -25,7 +24,7 @@ impl Requester {
             }],
             model: "ep-20250213110005-vwjgt".to_string(),
             base_url: format!("https://{DOUBAO_API}/chat/completions"),
-            api_key: "e6a7f2c3-6d56-4ab9-90ed-e88870b23c7d".to_string(),
+            api_key,
             timeout: Duration::from_secs(timeout),
         }
     }
