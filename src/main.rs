@@ -1,8 +1,8 @@
 use anyhow::Context;
 use clap::Parser;
+use std::io;
 use std::io::{stdin, Read, Write};
 use std::process::exit;
-use std::io;
 
 mod ai;
 mod config;
@@ -37,7 +37,8 @@ fn main_process() -> anyhow::Result<()> {
             stdin()
                 .read_line(&mut query)
                 .context("failed to read from input")?;
-            if query.trim().to_lowercase() == "exit" {
+            query = query.trim().to_string();
+            if query.to_lowercase() == "exit" {
                 break;
             }
 

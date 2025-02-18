@@ -1,12 +1,12 @@
 use crate::config::Config;
 use crate::parameter::Parameter;
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::time::Duration;
 
-const DOUBAO_API: &'static str = "ark.cn-beijing.volces.com/api/v3";
+const VOLC_API: &'static str = "ark.cn-beijing.volces.com/api/v3";
 
 pub struct Requester {
     client: Client,
@@ -25,8 +25,8 @@ impl Requester {
                 role: "system".to_string(),
                 content: parameter.prompt.clone().unwrap_or(config.prompt.clone()),
             }],
-            model: "ep-20250213110005-vwjgt".to_string(),
-            base_url: format!("https://{DOUBAO_API}/chat/completions"),
+            model: config.access_point.clone(),
+            base_url: format!("https://{VOLC_API}/chat/completions"),
             api_key: env::var("LLM_API_KEY").context("failed to read env var `LLM_API_KEY`")?,
             timeout: Duration::from_secs(parameter.timeout.unwrap_or(config.timeout)),
         })
@@ -54,13 +54,18 @@ impl Requester {
             .send()
             .context("fail to do request")?;
 
+        if !response.status().is_success() {
+            return Err(anyhow!("response code: {}", response.status()));
+        }
+
         let body = response.text().context("fail to get http response")?;
+
         let result: Response =
             serde_json::from_str(body.as_str()).context("fail to unmarshal json")?;
 
         self.messages.push(result.choices[0].message.clone());
 
-        Ok(result.choices[0].message.content.clone())
+        Ok(result.choices[0].message.content.trim().to_string())
     }
 }
 
