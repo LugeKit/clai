@@ -1,6 +1,9 @@
+use crate::config::Config;
+use crate::parameter::Parameter;
 use anyhow::Context;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::time::Duration;
 
 const DOUBAO_API: &'static str = "ark.cn-beijing.volces.com/api/v3";
@@ -15,18 +18,18 @@ pub struct Requester {
 }
 
 impl Requester {
-    pub fn new(prompt: String, timeout: u64, api_key: String) -> Requester {
-        Requester {
+    pub fn new(parameter: &Parameter, config: &Config) -> anyhow::Result<Requester> {
+        Ok(Requester {
             client: Client::new(),
             messages: vec![Message {
                 role: "system".to_string(),
-                content: prompt,
+                content: parameter.prompt.clone().unwrap_or(config.prompt.clone()),
             }],
             model: "ep-20250213110005-vwjgt".to_string(),
             base_url: format!("https://{DOUBAO_API}/chat/completions"),
-            api_key,
-            timeout: Duration::from_secs(timeout),
-        }
+            api_key: env::var("LLM_API_KEY").context("failed to read env var `LLM_API_KEY`")?,
+            timeout: Duration::from_secs(parameter.timeout.unwrap_or(config.timeout)),
+        })
     }
 
     pub fn request(&mut self, message: impl Into<String>) -> anyhow::Result<String> {

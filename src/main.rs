@@ -2,7 +2,7 @@ use anyhow::Context;
 use clap::Parser;
 use std::io::{stdin, Read, Write};
 use std::process::exit;
-use std::{env, io};
+use std::io;
 
 mod ai;
 mod config;
@@ -20,11 +20,7 @@ fn main_process() -> anyhow::Result<()> {
     let param = parameter::Parameter::parse();
     let config = config::Config::new();
 
-    let prompt = param.prompt.unwrap_or(config.prompt);
-    let timeout = param.timeout.unwrap_or(config.timeout);
-    let api_key = env::var("LLM_API_KEY").context("failed to get env var `LLM_API_KEY`")?;
-
-    let mut requester = ai::Requester::new(prompt, timeout, api_key);
+    let mut requester = ai::Requester::new(&param, &config)?;
     let mut first_answer = true;
 
     if param.interactive {
