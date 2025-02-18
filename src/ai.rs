@@ -57,12 +57,8 @@ impl Requester {
 
         self.messages.push(result.choices[0].message.clone());
 
-        Ok(format_ai_output(&result.choices[0].message.content))
+        Ok(result.choices[0].message.content.clone())
     }
-}
-
-fn format_ai_output(output: &String) -> String {
-    output.replace("\\n", "\n")
 }
 
 #[derive(Serialize)]
