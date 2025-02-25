@@ -1,5 +1,6 @@
 use anyhow::Context;
 use clap::Parser;
+use colored::Colorize;
 use std::io;
 use std::io::{stdin, Read, Write};
 use std::process::exit;
@@ -44,7 +45,7 @@ fn main_process() -> anyhow::Result<()> {
 
             let result = requester.request(query);
             if let Err(err) = result {
-                println!("error: {}\n", err);
+                println!("{} {}\n", "error:".red().bold(), err);
             }
         }
         return Ok(());
@@ -64,7 +65,7 @@ fn main_process() -> anyhow::Result<()> {
 
     let result = requester.request(query);
     if let Err(err) = result {
-        println!("err: {}\n", err);
+        println!("{} {}\n", "error:".red().bold(), err);
     }
     Ok(())
 }

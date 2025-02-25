@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::parameter::Parameter;
 use anyhow::{anyhow, Context};
+use colored::Colorize;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -72,10 +73,10 @@ impl Requester {
         };
 
         if let Some(reasoning_content) = &result.choices[0].message.reasoning_content {
-            println!("thinking: {}\n", reasoning_content);
+            println!("{} {}\n", "thinking:".blue().bold(), reasoning_content);
         }
 
-        println!("answer: {}\n", _message.content.trim());
+        println!("{} {}\n", "answer:".green().bold(), _message.content.trim());
         self.messages.push(_message);
 
         Ok(())
