@@ -43,7 +43,9 @@ fn main_process() -> anyhow::Result<()> {
             }
 
             let result = requester.request(query);
-            println!("answer: {}\n", result.unwrap_or_else(|e| { e.to_string() }));
+            if let Err(err) = result {
+                println!("error: {}\n", err);
+            }
         }
         return Ok(());
     }
@@ -61,6 +63,8 @@ fn main_process() -> anyhow::Result<()> {
     }
 
     let result = requester.request(query);
-    println!("answer: {}\n", result.unwrap_or_else(|e| { e.to_string() }));
+    if let Err(err) = result {
+        println!("err: {}\n", err);
+    }
     Ok(())
 }

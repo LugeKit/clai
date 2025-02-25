@@ -24,6 +24,7 @@ impl Requester {
             messages: vec![Message {
                 role: "system".to_string(),
                 content: parameter.prompt.clone().unwrap_or(config.prompt.clone()),
+                reasoning_content: None,
             }],
             model: config.access_point.clone(),
             base_url: format!("https://{VOLC_API}/chat/completions"),
@@ -32,10 +33,11 @@ impl Requester {
         })
     }
 
-    pub fn request(&mut self, message: impl Into<String>) -> anyhow::Result<String> {
+    pub fn request(&mut self, message: impl Into<String>) -> anyhow::Result<()> {
         let _message = Message {
             role: "user".to_string(),
             content: message.into(),
+            reasoning_content: None,
         };
 
         self.messages.push(_message);
@@ -63,9 +65,20 @@ impl Requester {
         let result: Response =
             serde_json::from_str(body.as_str()).context("fail to unmarshal json")?;
 
-        self.messages.push(result.choices[0].message.clone());
+        let _message = Message {
+            role: result.choices[0].message.role.clone(),
+            content: result.choices[0].message.content.clone(),
+            reasoning_content: None,
+        };
 
-        Ok(result.choices[0].message.content.trim().to_string())
+        if let Some(reasoning_content) = &result.choices[0].message.reasoning_content {
+            println!("thinking: {}\n", reasoning_content);
+        }
+
+        println!("answer: {}\n", _message.content.trim());
+        self.messages.push(_message);
+
+        Ok(())
     }
 }
 
@@ -102,4 +115,5 @@ struct Choice {
 struct Message {
     role: String,
     content: String,
+    reasoning_content: Option<String>,
 }
