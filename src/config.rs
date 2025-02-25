@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 
@@ -8,7 +9,8 @@ use std::io::Read;
 pub struct Config {
     pub prompt: String,
     pub timeout: u64,
-    pub access_point: String,
+    pub default_model: String,
+    pub models: HashMap<String, String>,
 }
 
 impl Config {
@@ -46,12 +48,14 @@ impl Config {
                 } else {
                     default_timeout
                 },
-                access_point: config.access_point,
+                default_model: config.default_model,
+                models: config.models,
             },
             None => Config {
                 prompt: default_prompt,
                 timeout: default_timeout,
-                access_point: String::new(),
+                default_model: String::new(),
+                models: HashMap::new(),
             },
         }
     }

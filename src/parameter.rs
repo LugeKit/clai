@@ -14,4 +14,7 @@ pub struct Parameter {
 
     #[arg(short = 'i', long = "interactive", default_value_t = false)]
     pub interactive: bool,
+
+    #[arg(short = 'm', long = "model")]
+    pub model: Option<String>,
 }

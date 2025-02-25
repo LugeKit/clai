@@ -20,6 +20,11 @@ pub struct Requester {
 
 impl Requester {
     pub fn new(parameter: &Parameter, config: &Config) -> anyhow::Result<Requester> {
+        let model = match &parameter.model {
+            None => &config.models[&config.default_model],
+            Some(model) => &config.models[model],
+        };
+
         Ok(Requester {
             client: Client::new(),
             messages: vec![Message {
@@ -27,7 +32,7 @@ impl Requester {
                 content: parameter.prompt.clone().unwrap_or(config.prompt.clone()),
                 reasoning_content: None,
             }],
-            model: config.access_point.clone(),
+            model: model.clone(),
             base_url: format!("https://{VOLC_API}/chat/completions"),
             api_key: env::var("LLM_API_KEY").context("failed to read env var `LLM_API_KEY`")?,
             timeout: Duration::from_secs(parameter.timeout.unwrap_or(config.timeout)),
