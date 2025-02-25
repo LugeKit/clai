@@ -10,7 +10,14 @@ pub struct Config {
     pub prompt: String,
     pub timeout: u64,
     pub default_model: String,
-    pub models: HashMap<String, String>,
+    pub base_url: String,
+    pub models: HashMap<String, Model>,
+}
+
+#[derive(Deserialize, Debug, Default)]
+pub struct Model {
+    pub access_point: String,
+    pub base_url: Option<String>,
 }
 
 impl Config {
@@ -33,28 +40,24 @@ impl Config {
     }
 
     fn fill_config(config: Option<Config>) -> Config {
-        let default_prompt = String::from("you are an excellent programmer, now briefly answer the questions, don't explain your answer in details when it is not required");
         let default_timeout = 1800;
-
         match config {
             Some(config) => Config {
-                prompt: if !config.prompt.is_empty() {
-                    config.prompt
-                } else {
-                    default_prompt
-                },
+                prompt: config.prompt,
                 timeout: if config.timeout > 0 {
                     config.timeout
                 } else {
                     default_timeout
                 },
                 default_model: config.default_model,
+                base_url: config.base_url,
                 models: config.models,
             },
             None => Config {
-                prompt: default_prompt,
+                prompt: String::new(),
                 timeout: default_timeout,
                 default_model: String::new(),
+                base_url: String::new(),
                 models: HashMap::new(),
             },
         }

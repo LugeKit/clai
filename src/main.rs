@@ -31,7 +31,7 @@ fn main_process() -> anyhow::Result<()> {
             }
             first_answer = false;
 
-            print!("question: ");
+            print!("{} ", "question:".yellow());
             io::stdout().flush().context("failed to flush stdout")?;
 
             let mut query = String::new();

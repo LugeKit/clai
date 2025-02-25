@@ -7,8 +7,6 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::time::Duration;
 
-const VOLC_API: &'static str = "ark.cn-beijing.volces.com/api/v3";
-
 pub struct Requester {
     client: Client,
     messages: Vec<Message>,
@@ -32,8 +30,11 @@ impl Requester {
                 content: parameter.prompt.clone().unwrap_or(config.prompt.clone()),
                 reasoning_content: None,
             }],
-            model: model.clone(),
-            base_url: format!("https://{VOLC_API}/chat/completions"),
+            model: model.access_point.clone(),
+            base_url: format!(
+                "https://{}/chat/completions",
+                model.base_url.clone().unwrap_or(config.base_url.clone())
+            ),
             api_key: env::var("LLM_API_KEY").context("failed to read env var `LLM_API_KEY`")?,
             timeout: Duration::from_secs(parameter.timeout.unwrap_or(config.timeout)),
         })
