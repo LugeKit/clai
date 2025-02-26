@@ -2,13 +2,12 @@ use crate::config::Config;
 use crate::parameter::Parameter;
 use anyhow::{anyhow, Context};
 use colored::Colorize;
-use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::time::Duration;
 
 pub struct Requester {
-    client: Client,
+    client: reqwest::Client,
     messages: Vec<Message>,
     model: String,
     base_url: String,
@@ -24,7 +23,7 @@ impl Requester {
         };
 
         Ok(Requester {
-            client: Client::new(),
+            client: reqwest::Client::new(),
             messages: vec![Message {
                 role: "system".to_string(),
                 content: parameter.prompt.clone().unwrap_or(config.prompt.clone()),
@@ -40,7 +39,7 @@ impl Requester {
         })
     }
 
-    pub fn request(&mut self, message: impl Into<String>) -> anyhow::Result<()> {
+    pub async fn request(&mut self, message: impl Into<String>) -> anyhow::Result<()> {
         let _message = Message {
             role: "user".to_string(),
             content: message.into(),
@@ -61,13 +60,20 @@ impl Requester {
             .json(&data)
             .timeout(self.timeout)
             .send()
+            .await
             .context("fail to do request")?;
 
         if !response.status().is_success() {
             return Err(anyhow!("response code: {}", response.status()));
         }
 
-        let body = response.text().context("fail to get http response")?;
+        self.resolve_response(response).await?;
+
+        Ok(())
+    }
+
+    async fn resolve_response(&mut self, resp: reqwest::Response) -> anyhow::Result<()> {
+        let body = resp.text().await.context("fail to get http response")?;
 
         let result: Response =
             serde_json::from_str(body.as_str()).context("fail to unmarshal json")?;
@@ -84,7 +90,6 @@ impl Requester {
 
         println!("{} {}\n", "answer:".green().bold(), _message.content.trim());
         self.messages.push(_message);
-
         Ok(())
     }
 }

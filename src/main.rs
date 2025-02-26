@@ -9,15 +9,16 @@ mod ai;
 mod config;
 mod parameter;
 
-fn main() {
-    if let Err(e) = main_process() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = main_process().await {
         println!("error: {}", e);
         exit(1);
     }
     exit(0);
 }
 
-fn main_process() -> anyhow::Result<()> {
+async fn main_process() -> anyhow::Result<()> {
     let param = parameter::Parameter::parse();
     let config = config::Config::new();
 
@@ -43,7 +44,7 @@ fn main_process() -> anyhow::Result<()> {
                 break;
             }
 
-            let result = requester.request(query);
+            let result = requester.request(query).await;
             if let Err(err) = result {
                 println!("{} {}\n", "error:".red().bold(), err);
             }
@@ -63,7 +64,7 @@ fn main_process() -> anyhow::Result<()> {
         }
     }
 
-    let result = requester.request(query);
+    let result = requester.request(query).await;
     if let Err(err) = result {
         println!("{} {}\n", "error:".red().bold(), err);
     }
