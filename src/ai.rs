@@ -84,11 +84,21 @@ impl Requester {
             reasoning_content: None,
         };
 
+        let mut skin = termimad::MadSkin::new();
+
         if let Some(reasoning_content) = &result.choices[0].message.reasoning_content {
-            println!("{} {}\n", "thinking:".blue().bold(), reasoning_content);
+            println!(
+                "{} {}",
+                "thinking:".blue().bold(),
+                skin.text(reasoning_content),
+            );
         }
 
-        println!("{} {}\n", "answer:".green().bold(), _message.content.trim());
+        println!(
+            "{} {}",
+            "answer:".green().bold(),
+            skin.text(_message.content.trim())
+        );
         self.messages.push(_message);
         Ok(())
     }
