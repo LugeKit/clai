@@ -26,21 +26,15 @@ async fn main_process() -> anyhow::Result<()> {
     let mut first_answer = true;
 
     if param.interactive {
+        let mut rl = rustyline::DefaultEditor::new()?;
         loop {
             if !first_answer {
                 println!("--------------------------");
             }
             first_answer = false;
 
-            print!("{} ", "question:".yellow());
-            io::stdout().flush().context("failed to flush stdout")?;
-
-            let mut query = String::new();
-            stdin()
-                .read_line(&mut query)
-                .context("failed to read from input")?;
-            query = query.trim().to_string();
-            if query.to_lowercase() == "exit" {
+            let query = rl.readline("question: ")?.trim().to_string();
+            if query == "exit" {
                 break;
             }
 

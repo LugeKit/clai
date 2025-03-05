@@ -6,7 +6,7 @@
 - Get your api_key from volcengine and export it to your shell
 
 ```bash
-export LLM_KEY=${your_api_key}
+export LLM_API_KEY=${your_api_key}
 ```
 
 - Set up your config.json in `~/.config/clai/config.json`
