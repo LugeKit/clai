@@ -16,6 +16,7 @@ dirs = "4"
 colored = "2"
 termimad = "0.2.0"
 rustyline = "15.0.0"
+tokio-stream = "0.1.17"
 
 [profile.dev]
 opt-level = 0

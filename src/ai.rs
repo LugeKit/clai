@@ -5,6 +5,7 @@ use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::time::Duration;
+use tokio_stream::StreamExt;
 
 pub struct Requester {
     client: reqwest::Client,
@@ -13,6 +14,7 @@ pub struct Requester {
     base_url: String,
     api_key: String,
     timeout: Duration,
+    stream: bool,
 }
 
 impl Requester {
@@ -36,6 +38,7 @@ impl Requester {
             ),
             api_key: env::var("LLM_API_KEY").context("failed to read env var `LLM_API_KEY`")?,
             timeout: Duration::from_secs(parameter.timeout.unwrap_or(config.timeout)),
+            stream: parameter.stream,
         })
     }
 
@@ -48,7 +51,7 @@ impl Requester {
 
         self.messages.push(_message);
 
-        let data = Request::new(&self.model, &self.messages);
+        let data = Request::new(&self.model, &self.messages, self.stream);
 
         let api_key = self.api_key.as_str();
 
@@ -67,8 +70,76 @@ impl Requester {
             return Err(anyhow!("response code: {}", response.status()));
         }
 
-        self.resolve_response(response).await?;
+        if self.stream {
+            self.resolve_response_streaming(response).await?;
+        } else {
+            self.resolve_response(response).await?;
+        }
 
+        Ok(())
+    }
+
+    async fn resolve_response_streaming(&mut self, response: reqwest::Response) -> anyhow::Result<()> {
+        let mut bytes_stream = response.bytes_stream();
+        let mut _message = Message {
+            role: String::from(""),
+            content: String::from(""),
+            reasoning_content: None,
+        };
+        let mut skin = termimad::MadSkin::new();
+
+        // 0: not start
+        // 1: thinking
+        // 2: finish
+        let mut thinking_part = 0;
+
+        while let Some(chunk) = bytes_stream.next().await {
+            let response_str = String::from_utf8(chunk?.to_vec()).context("fail to convert bytes_stream to str")?;
+            for line in response_str.lines() {
+                let data = line.trim().trim_start_matches("data: ");
+
+                if data.is_empty() {
+                    continue;
+                }
+
+                if data == "[DONE]" {
+                    break;
+                }
+
+                let result: StreamResponse = serde_json::from_str(data)?;
+                let current_message = &result.choices[0].delta;
+
+                if let Some(reasoning_content) = &current_message.reasoning_content {
+                    if thinking_part == 0 {
+                        print!("{}", "thinking: ".blue().bold());
+                        thinking_part = 1;
+                    }
+
+                    print!("{}", skin.text(reasoning_content).to_string().trim());
+                    continue;
+                }
+
+                if thinking_part <= 1 {
+                    if thinking_part == 1 {
+                        println!();
+                    }
+                    print!("{}", "answer: ".green().bold());
+                    thinking_part = 2;
+                }
+
+                let content = &current_message.content;
+                if content.is_empty() {
+                    continue;
+                }
+
+                let printed_str = skin.text(content).to_string();
+                print!("{}", printed_str.trim());
+                _message.content.push_str(&content);
+                _message.role = current_message.role.clone();
+            }
+        }
+        println!();
+        self.messages.push(_message);
         Ok(())
     }
 
@@ -113,10 +184,10 @@ struct Request<'a> {
 }
 
 impl Request<'_> {
-    fn new<'a>(model: &'a String, messages: &'a Vec<Message>) -> Request<'a> {
+    fn new<'a>(model: &'a String, messages: &'a Vec<Message>, stream: bool) -> Request<'a> {
         Request {
             model,
-            stream: false,
+            stream,
             messages,
             temperature: 0,
         }
@@ -135,6 +206,23 @@ struct Choice {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Message {
+    role: String,
+    content: String,
+    reasoning_content: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamResponse {
+    choices: Vec<StreamChoice>,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamChoice {
+    delta: StreamMessage,
+}
+
+#[derive(Deserialize, Debug)]
+struct StreamMessage {
     role: String,
     content: String,
     reasoning_content: Option<String>,
