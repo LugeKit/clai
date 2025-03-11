@@ -115,7 +115,12 @@ impl Requester {
                         thinking_part = 1;
                     }
 
-                    print!("{}", skin.text(reasoning_content).to_string().trim());
+                    let printed_str = skin.text(reasoning_content).to_string();
+                    if reasoning_content.ends_with("\n") {
+                        print!("{}", printed_str);
+                    } else {
+                        print!("{}", printed_str.trim_end_matches('\n'));
+                    }
                     continue;
                 }
 
@@ -133,7 +138,12 @@ impl Requester {
                 }
 
                 let printed_str = skin.text(content).to_string();
-                print!("{}", printed_str.trim());
+                if content.ends_with('\n') {
+                    print!("{}", printed_str);
+                } else {
+                    print!("{}", printed_str.trim_end_matches("\n"));
+                }
+
                 _message.content.push_str(&content);
                 _message.role = current_message.role.clone();
             }
