@@ -1,8 +1,7 @@
 use anyhow::Context;
 use clap::Parser;
 use colored::Colorize;
-use std::io;
-use std::io::{stdin, Read, Write};
+use std::io::{stdin, Read};
 use std::process::exit;
 
 mod ai;

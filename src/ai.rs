@@ -79,14 +79,17 @@ impl Requester {
         Ok(())
     }
 
-    async fn resolve_response_streaming(&mut self, response: reqwest::Response) -> anyhow::Result<()> {
+    async fn resolve_response_streaming(
+        &mut self,
+        response: reqwest::Response,
+    ) -> anyhow::Result<()> {
         let mut bytes_stream = response.bytes_stream();
         let mut _message = Message {
             role: String::from(""),
             content: String::from(""),
             reasoning_content: None,
         };
-        let mut skin = termimad::MadSkin::new();
+        let skin = termimad::MadSkin::new();
 
         // 0: not start
         // 1: thinking
@@ -94,7 +97,8 @@ impl Requester {
         let mut thinking_part = 0;
 
         while let Some(chunk) = bytes_stream.next().await {
-            let response_str = String::from_utf8(chunk?.to_vec()).context("fail to convert bytes_stream to str")?;
+            let response_str = String::from_utf8(chunk?.to_vec())
+                .context("fail to convert bytes_stream to str")?;
             for line in response_str.lines() {
                 let data = line.trim().trim_start_matches("data: ");
 
@@ -106,8 +110,8 @@ impl Requester {
                     break;
                 }
 
-                let result: StreamResponse = serde_json::from_str(data)?;
-                let current_message = &result.choices[0].delta;
+                let mut result: StreamResponse = serde_json::from_str(data)?;
+                let current_message = result.choices.remove(0).delta;
 
                 if let Some(reasoning_content) = &current_message.reasoning_content {
                     if thinking_part == 0 {
@@ -145,7 +149,7 @@ impl Requester {
                 }
 
                 _message.content.push_str(&content);
-                _message.role = current_message.role.clone();
+                _message.role = current_message.role;
             }
         }
         println!();
@@ -156,16 +160,16 @@ impl Requester {
     async fn resolve_response(&mut self, resp: reqwest::Response) -> anyhow::Result<()> {
         let body = resp.text().await.context("fail to get http response")?;
 
-        let result: Response =
+        let mut result: Response =
             serde_json::from_str(body.as_str()).context("fail to unmarshal json")?;
 
         let _message = Message {
-            role: result.choices[0].message.role.clone(),
-            content: result.choices[0].message.content.clone(),
+            role: result.choices.remove(0).message.role,
+            content: result.choices.remove(0).message.content,
             reasoning_content: None,
         };
 
-        let mut skin = termimad::MadSkin::new();
+        let skin = termimad::MadSkin::new();
 
         if let Some(reasoning_content) = &result.choices[0].message.reasoning_content {
             println!(
