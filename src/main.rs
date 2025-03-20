@@ -7,6 +7,7 @@ use std::process::exit;
 mod ai;
 mod config;
 mod parameter;
+mod sse;
 
 #[tokio::main]
 async fn main() {

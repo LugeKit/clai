@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::parameter::Parameter;
+use crate::sse::SSELines;
 use anyhow::{anyhow, Context};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
@@ -99,18 +100,8 @@ impl Requester {
         while let Some(chunk) = bytes_stream.next().await {
             let response_str = String::from_utf8(chunk?.to_vec())
                 .context("fail to convert bytes_stream to str")?;
-            for line in response_str.lines() {
-                let data = line.trim().trim_start_matches("data: ");
-
-                if data.is_empty() {
-                    continue;
-                }
-
-                if data == "[DONE]" {
-                    break;
-                }
-
-                let mut result: StreamResponse = serde_json::from_str(data)?;
+            for line in SSELines::from(response_str.lines()) {
+                let mut result: StreamResponse = serde_json::from_str(line)?;
                 let current_message = result.choices.remove(0).delta;
 
                 if let Some(reasoning_content) = &current_message.reasoning_content {
@@ -137,10 +128,6 @@ impl Requester {
                 }
 
                 let content = &current_message.content;
-                if content.is_empty() {
-                    continue;
-                }
-
                 let printed_str = skin.text(content).to_string();
                 if content.ends_with('\n') {
                     print!("{}", printed_str);
