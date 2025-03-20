@@ -23,16 +23,11 @@ async fn main_process() -> anyhow::Result<()> {
     let config = config::Config::new();
 
     let mut requester = ai::Requester::new(&param, &config)?;
-    let mut first_answer = true;
-
+    let mut divide_line_printer = print_divide_line();
     if param.interactive {
         let mut rl = rustyline::DefaultEditor::new()?;
         loop {
-            if !first_answer {
-                println!("--------------------------");
-            }
-            first_answer = false;
-
+            divide_line_printer();
             let query = rl.readline("question: ")?.trim().to_string();
             if query == "exit" {
                 break;
@@ -63,4 +58,16 @@ async fn main_process() -> anyhow::Result<()> {
         println!("{} {}\n", "error:".red().bold(), err);
     }
     Ok(())
+}
+
+fn print_divide_line() -> Box<dyn FnMut() -> ()> {
+    let mut first_call = true;
+    Box::new(move || {
+        if first_call {
+            first_call = false;
+            return;
+        }
+
+        println!("--------------------------");
+    })
 }
