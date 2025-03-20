@@ -18,6 +18,6 @@ pub struct Parameter {
     #[arg(short = 'm', long = "model")]
     pub model: Option<String>,
 
-    #[arg(short = 's', long = "stream", default_value_t = true)]
+    #[arg(short = 's', long = "stream", default_value_t = false)]
     pub stream: bool,
 }
